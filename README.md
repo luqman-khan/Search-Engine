@@ -6,7 +6,7 @@ When you run the program, the application UI is displayed. User is provided a se
 Clicking on the 'folder' button enables user to select a directory that contains a list of text files that will be indexed.
 User may then query terms by entering the query text in the text box and clicking on the 'search' button.
 A list of documents containing the queried term is displayed for the user.
-User may also click on a document name to view the original text of the document.
+User may additionallly, click on a document name from the displayed document list to view the original text of the document.
 ### Query Language
 User queries of the form Q<sub>1</sub> + Q<sub>2</sub> + ... + Q<sub>k</sub> are supported.
 Where the + represents OR, and we call each Q<sub>i</sub> a subquery, defned as a sequence of query literals
@@ -21,7 +21,7 @@ A query literal is one of the following:
 
 * NEAR operator
 * Graphical user interface
-* Unite testing framework
+* Unit testing framework
 * Wildcard queries
 
 ## Authors
