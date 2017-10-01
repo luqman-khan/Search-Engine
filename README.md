@@ -2,9 +2,9 @@
 This project is part of the course work for CECS 529. The project pieces together various search engine features. 
 
 ## Getting Started
-When you run the program, the application UI is displayed. User is provided a search box, a button called 'folder' and another button called 'search'.
-Clicking on the 'folder' button enables user to select a directory that contains a list of text files that will be indexed.
-User may then query terms by entering the query text in the text box and clicking on the 'search' button.
+When you run the program, the application UI is displayed. User is provided a search box, a button called 'Folder' and another button called 'Search'.
+Clicking on the 'Folder' button enables user to select a directory that contains a list of text files that will be indexed.
+User may then query terms by entering the query text in the text box and clicking on the 'Search' button.
 A list of documents containing the queried term is displayed for the user.
 User may additionallly, click on a document name from the displayed document list to view the original text of the document.
 ### Query Language
