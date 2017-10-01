@@ -4,37 +4,28 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.HashSet;
+//import java.util.Arrays;
+import java.util.HashMap;
+//import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Scanner;
 import javax.swing.JTextPane;
 
 public class InvertedIndex {
 
-	private String[] mTermArray;
-	private String[] mFileArray;
-	private boolean[][] mIndex;
+	private Map<String, HashMap<Long, String>> pos_dictionary;
+	private HashMap<Long, String> files;
+	private long file_count = 0;
 	final Path filePath;
 
 	InvertedIndex(final Path directory) {
 		filePath = directory;
 	}
 
-	/**
-	 * Indexes all .txt files in the specified directory. First builds a
-	 * dictionary of all terms in those files, then builds a boolean
-	 * term-document matrix as the index.
-	 * 
-	 * @param directory
-	 *            the Path of the directory to index.
-	 */
 	public void indexDirectory(final Path directory) {
-		// will need a data structure to store all the terms in the document
-		// HashSet: a hashtable structure with constant-time insertion; does not
-		// allow duplicate entries; stores entries in unsorted order.
-
-		final HashSet<String> dictionary = new HashSet<>();
-		final HashSet<String> files = new HashSet<>();
+		pos_dictionary = new HashMap<String, HashMap<Long, String>>();
+		files = new HashMap<>();
 
 		try {
 			// go through each .txt file in the working directory
@@ -54,8 +45,9 @@ public class InvertedIndex {
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 					// only process .txt files
 					if (file.toString().endsWith(".txt")) {
-						buildDictionary(file, dictionary);
-						files.add(file.getFileName().toString());
+						buildDictionary(file, file_count, pos_dictionary);
+						files.put(file_count, file.getFileName().toString());
+						file_count++;
 					}
 					return FileVisitResult.CONTINUE;
 				}
@@ -66,78 +58,31 @@ public class InvertedIndex {
 					return FileVisitResult.CONTINUE;
 				}
 			});
-
-			// convert the dictionaries to sorted arrays, so we can use binary
-			// search for finding indices.
-			mTermArray = dictionary.toArray(new String[0]);
-			mFileArray = files.toArray(new String[0]);
-
-			Arrays.sort(mTermArray);
-			Arrays.sort(mFileArray);
-
-			// construct the term-document matrix. docs are rows, terms are
-			// cols.
-			mIndex = new boolean[files.size()][dictionary.size()];
-
-			// walk back through the files -- a second time!!
-			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
-				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-					if (directory.equals(dir)) {
-						return FileVisitResult.CONTINUE;
-					}
-					return FileVisitResult.SKIP_SUBTREE;
-				}
-
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-
-					if (file.toString().endsWith(".txt")) {
-						// add entries to the index matrix for this file
-						indexFile(file, mIndex, mTermArray, mFileArray);
-					}
-					return FileVisitResult.CONTINUE;
-				}
-
-				public FileVisitResult visitFileFailed(Path file, IOException e) {
-					return FileVisitResult.CONTINUE;
-				}
-
-			});
 		} catch (Exception ex) {
 		}
 	}
 
-	private static void buildDictionary(Path file, HashSet<String> dictionary) {
+	private static void buildDictionary(Path file, long file_number,
+			Map<String, HashMap<Long, String>> pos_dictionary) {
 		try {
 			try (Scanner scan = new Scanner(file)) {
+				long word_count = 0;
 				while (scan.hasNext()) {
 					// read one word at a time; process and add it to
 					// dictionary.
 
 					String word = processWord(scan.next());
 					if (word.length() > 0) {
-						dictionary.add(word);
-					}
-				}
-			}
-		} catch (IOException ex) {
-		}
-
-	}
-
-	private static void indexFile(Path file, boolean[][] index, String[] dictArray, String[] fileArray) {
-
-		// get the row# for this file in the index matrix.
-		int fileRow = Arrays.binarySearch(fileArray, file.getFileName().toString());
-
-		try {
-			// read one word at a time; process and update the matrix.
-			try (Scanner scan = new Scanner(file)) {
-				while (scan.hasNext()) {
-					String word = processWord(scan.next());
-					if (word.length() > 0) {
-						int wordCol = Arrays.binarySearch(dictArray, word);
-
-						index[fileRow][wordCol] = true;
+						if (!pos_dictionary.containsKey(word)) {
+							HashMap<Long, String> pos_hash = new HashMap<Long, String>();
+							pos_dictionary.put(word, pos_hash);
+						}
+						if (!pos_dictionary.get(word).containsKey(file_number)) {
+							pos_dictionary.get(word).put(file_number, "");
+						}
+						pos_dictionary.get(word).put(file_number,
+								pos_dictionary.get(word).get(file_number) + word_count + ",");
+						word_count++;
 					}
 				}
 			}
@@ -150,28 +95,56 @@ public class InvertedIndex {
 		return next.replaceAll("\\W", "").toLowerCase();
 	}
 
-	/**
-	 * Prints the result of the indexing, as a matrix of 0 and 1 entries.
-	 * Warning: prints a lot of text :).
-	 */
 	public void printResults(String input, JTextPane result_txt) {
-		int wNdx = -1;
-		for (int i = 0; i < mTermArray.length; i++) {
-			if (mTermArray[i].equalsIgnoreCase(input)) {
-				wNdx = i;
-				break;
+		String input_terms[] = new String[input.length()];
+		input_terms = getInputTerms(input);
+		System.out.println("Length of input terms" + input_terms.length);
+		HashMap<Long, Long> query_result = new HashMap<>();
+		if (input_terms.length > 0)
+			query_result = searchQuery(input_terms);
+
+		System.out.println("Length of input query result" + query_result.size());
+		if (query_result.size() > 0) {
+			for (Iterator<Long> i = query_result.keySet().iterator(); i.hasNext();) {
+				long file_number = i.next();
+				result_txt.setText(result_txt.getText() + files.get(file_number) + "\n");
 			}
 		}
-		if (wNdx >= 0) {
-			int fNdx = 0;
-			for (String file : mFileArray) {
-				if (mIndex[fNdx][wNdx])
-					result_txt.setText(result_txt.getText() + file + "\n");
-				fNdx++;
-			}
-		} else {
-			result_txt.setText("NO SUCH WORD FOUND...");
+		else{
+			result_txt.setText("NO RESULT FOUND.......\n");
 		}
+	}
+
+	private HashMap<Long, Long> searchQuery(String[] input_terms) {
+		HashMap<Long, Long> file_intersection = new HashMap<Long, Long>();
+		for (int i = 0; i < input_terms.length; i++) {
+			if (pos_dictionary.containsKey(input_terms[i])) {
+				System.out.println(" term - files" + pos_dictionary.get(input_terms[i]).keySet());
+				for (Iterator<Long> j = pos_dictionary.get(input_terms[i]).keySet().iterator(); j.hasNext();) {
+					long file_number = j.next();
+					System.out.println("Union FIle" + files.get(file_number));
+					if (!file_intersection.containsKey(file_number))
+						file_intersection.put(file_number, new Long(1));
+					else
+						file_intersection.put(file_number, file_intersection.get(file_number) + 1);
+				}
+			}
+		}
+		for (Iterator<Long> j = file_intersection.keySet().iterator(); j.hasNext();) {
+			long file_number = j.next();
+			if (file_intersection.get(file_number) < input_terms.length)
+				j.remove();
+		}
+		return file_intersection;
+	}
+
+	private String[] getInputTerms(String input) {
+		String input_terms[] = new String[input.length()];
+		input_terms = input.split("\\s+");
+		for (int i = 0; i < input_terms.length; i++) {
+			input_terms[i] = processWord(input_terms[i]);
+		}
+		return input_terms;
 	}
 
 }
