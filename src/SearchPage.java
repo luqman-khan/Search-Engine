@@ -18,7 +18,7 @@ public class SearchPage {
 	private JFrame frame;
 	private JTextField folder_path_txt;
 	private JTextField search_txt;
-	private InvertedIndex index;
+	private QueryProcessor index;
 	private JTextArea suggestion_txt;
 	private JTextPane result_txt;
 
@@ -65,14 +65,13 @@ public class SearchPage {
 			public void actionPerformed(ActionEvent arg0) {
 				JFileChooser fc = new JFileChooser();
 				fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				fc.showOpenDialog(fc);
 				int returnVal = fc.showOpenDialog(fc);
 				Path folderPath = Paths.get("");
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					folderPath = Paths.get(fc.getSelectedFile().toString());
 					folder_path_txt.setText(folderPath.toString());
 				}
-				index = new InvertedIndex(folderPath);
+				index = new QueryProcessor(folderPath);
 				index.indexDirectory(folderPath);
 			}
 		});
@@ -83,7 +82,7 @@ public class SearchPage {
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				result_txt.setText("");
-				index.printResults(search_txt.getText(), result_txt);
+				index.processQuery(search_txt.getText(), result_txt);
 			}
 		});
 		btnNewButton_1.setBounds(309, 10, 89, 23);
