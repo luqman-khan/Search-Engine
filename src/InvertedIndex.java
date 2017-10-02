@@ -5,12 +5,15 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
+import javax.swing.JTextArea;
+
 public class InvertedIndex {
 
-	protected  Map<String, HashMap<Long, String>> pos_dictionary;
+	protected Map<String, HashMap<Long, String>> pos_dictionary;
 	protected HashMap<Long, String> files;
 	private long file_count = 0;
 	final Path filePath;
@@ -18,7 +21,7 @@ public class InvertedIndex {
 	InvertedIndex(final Path directory) {
 		filePath = directory;
 	}
-	
+
 	public void indexDirectory(final Path directory) {
 		pos_dictionary = new HashMap<String, HashMap<Long, String>>();
 		files = new HashMap<>();
@@ -85,5 +88,12 @@ public class InvertedIndex {
 		} catch (IOException ex) {
 		}
 
+	}
+
+	public void indexPrint(JTextArea result_txt) {
+		String vocab_string = "";
+		for (Iterator<String> i = pos_dictionary.keySet().iterator(); i.hasNext();)
+			vocab_string = vocab_string + "\n" + i.next();
+		result_txt.setText(vocab_string);
 	}
 }

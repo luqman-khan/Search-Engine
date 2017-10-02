@@ -1,5 +1,6 @@
 import java.awt.EventQueue;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
@@ -8,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.swing.JFileChooser;
 import javax.swing.JTextArea;
-import javax.swing.JTextPane;
 import javax.swing.text.Utilities;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -20,7 +20,8 @@ public class SearchPage {
 	private JTextField search_txt;
 	private QueryProcessor index;
 	private JTextArea suggestion_txt;
-	private JTextPane result_txt;
+	private JTextArea result_txt;
+	private JScrollPane scrollPane;
 
 	/**
 	 * Launch the application.
@@ -77,7 +78,7 @@ public class SearchPage {
 		});
 		btnNewButton.setBounds(437, 10, 124, 23);
 		frame.getContentPane().add(btnNewButton);
-
+		
 		JButton btnNewButton_1 = new JButton("Search");
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -96,28 +97,35 @@ public class SearchPage {
 		suggestion_txt = new JTextArea();
 		suggestion_txt.setBounds(10, 60, 388, 680);
 		frame.getContentPane().add(suggestion_txt);
+		
+		scrollPane = new JScrollPane();
+		scrollPane.setBounds(437, 60, 807, 680);
+		frame.getContentPane().add(scrollPane);
+		
+		
+		
 
-		result_txt = new JTextPane();
-		result_txt.setEditable(false);
-		result_txt.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				try {
-					int pt = result_txt.viewToModel(e.getPoint());
-					int spt = Utilities.getWordStart(result_txt, pt);
-					int ept = Utilities.getWordEnd(result_txt, pt);
-					result_txt.setSelectionStart(spt);
-					result_txt.setSelectionEnd(ept);
-					File file = new File(folder_path_txt.getText() + "\\" + result_txt.getSelectedText() + ".txt");
-					if (file.exists()) {
-						ProcessBuilder pb = new ProcessBuilder("Notepad.exe", file.toString());
-						pb.start();
+		result_txt = new JTextArea();
+		scrollPane.setViewportView(result_txt);
+				result_txt.setEditable(false);
+				
+				result_txt.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						try {
+							int pt = result_txt.viewToModel(e.getPoint());
+							int spt = Utilities.getWordStart(result_txt, pt);
+							int ept = Utilities.getWordEnd(result_txt, pt);
+							result_txt.setSelectionStart(spt);
+							result_txt.setSelectionEnd(ept);
+							File file = new File(folder_path_txt.getText() + "\\" + result_txt.getSelectedText() + ".txt");
+							if (file.exists()) {
+								ProcessBuilder pb = new ProcessBuilder("Notepad.exe", file.toString());
+								pb.start();
+							}
+						} catch (Exception ex) {
+						}
 					}
-				} catch (Exception ex) {
-				}
-			}
-		});
-		result_txt.setBounds(437, 60, 807, 680);
-		frame.getContentPane().add(result_txt);
+				});
 	}
 }
