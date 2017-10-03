@@ -13,7 +13,7 @@ public class KGramsIndex {
             StringBuilder sb = new StringBuilder();
             sb.append(chars[i]);
             int start = i+1;
-            for(; start < i+1; start++) {
+            for(; start < i+n; start++) {
                 sb.append(chars[start]);
             }
             ngrams.add(sb.toString());
