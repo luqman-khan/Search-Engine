@@ -98,12 +98,12 @@ public class InvertedIndex {
 	public void printResults(String input, JTextPane result_txt) {
 		String input_terms[] = new String[input.length()];
 		input_terms = getInputTerms(input);
-		System.out.println("Length of input terms" + input_terms.length);
+		System.out.println("Length of input terms: " + input_terms.length);
 		HashMap<Long, Long> query_result = new HashMap<>();
 		if (input_terms.length > 0)
 			query_result = searchQuery(input_terms);
 
-		System.out.println("Length of input query result" + query_result.size());
+		System.out.println("Length of input query result: " + query_result.size());
 		if (query_result.size() > 0) {
 			for (Iterator<Long> i = query_result.keySet().iterator(); i.hasNext();) {
 				long file_number = i.next();
