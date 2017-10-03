@@ -20,7 +20,9 @@ public class QueryProcessor extends InvertedIndex {
 	public void processQuery(String input, JTextArea result_txt) {
 
 		final_file_list = new HashMap<Long, Long>();
-
+		//create pattern obj and matcher obj for each type of query
+		Pattern quit_pattern = Pattern.compile("^:q");
+		Matcher quit_matcher = quit_pattern.matcher(input);
 		Pattern near_pattern = Pattern.compile("(.+)(\\s+)near(/)([1-9]([0-9]*))(\\s+)(.+)");
 		Matcher near_matcher = near_pattern.matcher(input);
 		Pattern stem_pattern = Pattern.compile("^:stem(\\s+)(.+)$");
@@ -33,9 +35,13 @@ public class QueryProcessor extends InvertedIndex {
 		Matcher phrase_matcher = phrase_pattern.matcher(input);
 		Pattern vocab_pattern = Pattern.compile("(\\s*):vocab(\\s*)");
 		Matcher vocab_matcher = vocab_pattern.matcher(input);
-
+		//if input is ":q" then quit program
+		if (quit_matcher.find())
+			System.exit(0);
+		//if input is a phrase
 		if (phrase_matcher.find())
 			near_k = 1;
+		//if input is ":vocab" then print all vocab in corpus
 		if(vocab_matcher.find()){
 			super.indexPrint(result_txt);
 			return;
