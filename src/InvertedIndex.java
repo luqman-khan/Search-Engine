@@ -16,33 +16,30 @@ public class InvertedIndex {
 	protected Map<String, HashMap<Long, String>> pos_dictionary;
 	protected HashMap<Long, String> files;
 	private long file_count = 0;
-	final Path filePath;
+	final Path folder_path;
 
 	InvertedIndex(final Path directory) {
-		filePath = directory;
+		folder_path = directory;
 	}
-
-	public void indexDirectory(final Path directory) {
+	
+	/**
+	 * traverse through all files in the directory and calls "buildDictionary" for each of the instance
+	 */
+	public void indexDirectory() {
 		pos_dictionary = new HashMap<String, HashMap<Long, String>>();
 		files = new HashMap<>();
 
 		try {
-			// go through each .txt file in the working directory
-
-			System.out.println(directory.toString());
-
-			Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+			Files.walkFileTree(folder_path, new SimpleFileVisitor<Path>() {
 
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-					// make sure we only process the current working directory
-					if (directory.equals(dir)) {
+					if (folder_path.equals(dir)) {
 						return FileVisitResult.CONTINUE;
 					}
 					return FileVisitResult.SKIP_SUBTREE;
 				}
 
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-					// only process .txt files
 					if (file.toString().endsWith(".txt")) {
 						buildDictionary(file, file_count, pos_dictionary);
 						files.put(file_count, file.getFileName().toString());
@@ -51,7 +48,6 @@ public class InvertedIndex {
 					return FileVisitResult.CONTINUE;
 				}
 
-				// don't throw exceptions if files are locked/other errors occur
 				public FileVisitResult visitFileFailed(Path file, IOException e) {
 
 					return FileVisitResult.CONTINUE;
@@ -60,16 +56,16 @@ public class InvertedIndex {
 		} catch (Exception ex) {
 		}
 	}
-
+	
+	/**
+	 * builds inverted index of the file given in the argument
+	 */
 	private static void buildDictionary(Path file, long file_number,
 			Map<String, HashMap<Long, String>> pos_dictionary) {
 		try {
 			try (Scanner scan = new Scanner(file)) {
 				long word_count = 0;
 				while (scan.hasNext()) {
-					// read one word at a time; process and add it to
-					// dictionary.
-
 					String word = new Stemmer().processWord(scan.next());
 					if (word.length() > 0) {
 						if (!pos_dictionary.containsKey(word)) {
@@ -85,11 +81,13 @@ public class InvertedIndex {
 					}
 				}
 			}
-		} catch (IOException ex) {
-		}
+		} catch (IOException ex) {}
 
 	}
-
+	
+	/**
+	 * outputs the vocab word list (stemmed)
+	 */
 	public void indexPrint(JTextArea result_txt) {
 		String vocab_string = "";
 		for (Iterator<String> i = pos_dictionary.keySet().iterator(); i.hasNext();)

@@ -73,7 +73,7 @@ public class SearchPage {
 					folder_path_txt.setText(folderPath.toString());
 				}
 				index = new QueryProcessor(folderPath);
-				index.indexDirectory(folderPath);
+				index.inverted_index.indexDirectory();
 			}
 		});
 		btnNewButton.setBounds(437, 10, 124, 23);
@@ -100,10 +100,7 @@ public class SearchPage {
 		
 		scrollPane = new JScrollPane();
 		scrollPane.setBounds(437, 60, 807, 680);
-		frame.getContentPane().add(scrollPane);
-		
-		
-		
+		frame.getContentPane().add(scrollPane);	
 
 		result_txt = new JTextArea();
 		scrollPane.setViewportView(result_txt);

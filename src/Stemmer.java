@@ -1,4 +1,7 @@
 import org.tartarus.snowball.SnowballStemmer;
+/**
+ * This class is used for stemming file and query terms using Porter2 stemmer.
+ */
 class Stemmer {
 	public String processWord(String word) {
 		try {
@@ -9,7 +12,6 @@ class Stemmer {
 			stemmer.stem();
 			return stemmer.getCurrent();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return "";
 		}
