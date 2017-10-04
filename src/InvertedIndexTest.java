@@ -14,8 +14,7 @@ public class InvertedIndexTest {
 	/**
 	 * Initializing test variables.
 	 */
-	final Path fileTestPath = Paths.get("C:\\Users\\luqma\\workspace\\SearchEngine\\src\\TestCorpus");
-	
+	final Path fileTestPath = Paths.get(System.getProperty("user.dir")+"\\src\\TestCorpus");
 	/**
 	 * Positional inverted index test.
 	 */

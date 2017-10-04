@@ -18,7 +18,7 @@ public class QueryProcessorTest {
 	/**
 	 * Initializing test variables.
 	 */
-	final Path file_test_path = Paths.get("C:\\Users\\luqma\\workspace\\SearchEngine\\src\\TestCorpus");
+	final Path file_test_path = Paths.get(System.getProperty("user.dir")+"\\src\\TestCorpus");
 	final String and_search_test = "whatever you";
 	final String or_search_test = "whatever + you";
 	final String near_search_test = "you near/2 missing";

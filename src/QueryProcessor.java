@@ -180,6 +180,7 @@ public class QueryProcessor {
 				output_string = output_string + inverted_index.files.get(file_number) + "\n";
 
 			}
+//			output_string = output_string+"\n count : "+ final_file_list.keySet().size();
 			result_txt.setText(output_string);
 		} else {
 			result_txt.setText("NO RESULT FOUND.......\n");
