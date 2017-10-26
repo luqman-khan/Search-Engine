@@ -5,6 +5,7 @@ import org.tartarus.snowball.SnowballStemmer;
 class Stemmer {
 	public String processWord(String word) {
 		try {
+//			word = word.replaceAll("^[\\w]", "").toLowerCase();
 			Class stemClass = Class.forName("org.tartarus.snowball.ext.englishStemmer");
 			SnowballStemmer stemmer = (SnowballStemmer) stemClass.newInstance();
 			word = word.replaceAll("\\W", "").toLowerCase();
