@@ -31,11 +31,11 @@ public class QueryProcessorTest {
 //	 @Ignore
 	@Test
 	public void andQueryTest() {
-		System.out.println("Testing AND query!!");
-		QueryProcessor indexObject = new QueryProcessor(file_test_path);
-		indexObject.inverted_index.indexDirectory();
-		HashMap<Long, Long> testDictionary = indexObject.andQuery(and_search_test);
-		printTestResults(testDictionary, indexObject);
+//		System.out.println("Testing AND query!!");
+//		QueryProcessor indexObject = new QueryProcessor(file_test_path);
+//		indexObject.inverted_index.indexDirectory();
+//		HashMap<Long, Long> testDictionary = indexObject.andQuery(and_search_test);
+//		printTestResults(testDictionary, indexObject);
 
 	}
 
@@ -45,11 +45,11 @@ public class QueryProcessorTest {
 //	@Ignore
 	@Test
 	public void orQueryTest() {
-		System.out.println("Testing OR query!!");
-		QueryProcessor indexObject = new QueryProcessor(file_test_path);
-		indexObject.inverted_index.indexDirectory();
-		HashMap<Long, Long> testDictionary = indexObject.orQuery(or_search_test);
-		printTestResults(testDictionary, indexObject);
+//		System.out.println("Testing OR query!!");
+//		QueryProcessor indexObject = new QueryProcessor(file_test_path);
+//		indexObject.inverted_index.indexDirectory();
+//		HashMap<Long, Long> testDictionary = indexObject.orQuery(or_search_test);
+//		printTestResults(testDictionary, indexObject);
 
 	}
 
