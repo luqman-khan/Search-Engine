@@ -36,16 +36,13 @@ public class HashList {
 	}
 	
 	void print(){
-//		System.out.println(this.posting_list.size());
 		for(String key : this.posting_list.keySet()){
-			System.out.println("key is: "+key+" and value array is: "+ this.posting_list.get(key)+ "\n\n" );
 		}
 	}
 	
 	Long[] getDocuments(String term){
 		Long[] documents = new Long[0];
 		if(this.posting_list.get(term) != null){
-			System.out.println("///////////////////////////////////////////////"+term);
 			long doc_frequency = this.posting_list.get(term).get(1); // get number of documents with that term
 			documents = new Long[(int)doc_frequency];
 			int doc_id_pos = 2;
