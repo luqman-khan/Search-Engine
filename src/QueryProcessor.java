@@ -1,4 +1,5 @@
 import java.nio.file.Path;
+import java.util.Arrays;
 //import java.util.Arrays;
 //import java.util.HashMap;
 //import java.util.Iterator;
@@ -15,21 +16,27 @@ public class QueryProcessor {
 	private Long [] final_file_list;
 //	private String[] or_word_list;
 	protected InvertedIndex inverted_index;
+	protected DiskInvertedIndex disk_inverted_index;
+	protected IndexWriter disk_index_writer;
+	protected Object index;
 
 	/**
 	 * constructor to initialize the indexer object with the specified directory
 	 */
 	QueryProcessor(Path directory) {
 		inverted_index = new InvertedIndex(directory);
+		disk_inverted_index = new DiskInvertedIndex(directory.toString());
+		disk_index_writer = new IndexWriter(directory.toString());
 	}
 
 	/**
 	 * Function to process query and parse the query string into different type
 	 * of queries like or,and phrase etc.
 	 */
-	protected void processQuery(String input, JTextArea result_txt) {
+	protected String processQuery(String input, boolean mode) {
 
-
+		String result_string = "";
+		
 		// regx to match the query string with different type of query forms
 		Pattern near_pattern = Pattern.compile("(.+)(\\s+)near(/)([1-9]([0-9]*))(\\s+)(.+)");
 		Matcher near_matcher = near_pattern.matcher(input);
@@ -41,28 +48,29 @@ public class QueryProcessor {
 		Matcher vocab_matcher = vocab_pattern.matcher(input);
 
 		if (vocab_matcher.find()) { // to output vocab list
-			inverted_index.indexPrint(result_txt);
-			return;
+			result_string = inverted_index.indexPrint();
+			return result_string;
 		} else if (stem_matcher.find()) { // get a stemmed word
-			result_txt.setText(new Stemmer().processWord(input.split(":stem(\\s+)")[1]));
-			return;
+			result_string = new Stemmer().processWord(input.split(":stem(\\s+)")[1]);
+			return result_string;
 		}else if (set_near_matcher.find()) { // set the value of near k
 			near_k = Integer.parseInt((input.split("near/")[1].split(" ")[0]));
-			result_txt.setText("Near K is set to : " + near_k);
-			return;
+			result_string = "Near K is set to : " + near_k;
+			return result_string;
 		} else if (near_matcher.find()) { // to calculate near k of set of words
 			near_k = Integer.parseInt((input.split("near/")[1].split(" ")[0]));
 			input = input.replaceAll("near/[1-9]([0-9])*", "");
 			near_k_flag = true;
 		}
-		final_file_list = getDocForQuery(input);
-		printResults(result_txt);
+		final_file_list = getDocForQuery(input, mode);
+		result_string = getOutputString();
+		return result_string;
 	}
 	
 	/**
 	 * splits the query on evry '+' then every 'phrase' ("") then every space and perform respective operations
 	 */
-	Long [] getDocForQuery(String query){
+	Long [] getDocForQuery(String query, boolean mode){
 		String [] or_query_array = query.trim().split("[+]+");
 		Long [] phrase_and_docs = new Long[0];
 		Long [] all_query_docs = new Long[0] ;
@@ -78,7 +86,11 @@ public class QueryProcessor {
 					String [] phrase_array = phrase_matcher.group(1).trim().split("[ ]+|-+");
 					for(int j=0; j<phrase_array.length; j++)
 						phrase_array[j] = new Stemmer().processWord(phrase_array[j]);
-					Long [] each_phrase_docs = inverted_index.pos_hash_list.getDocuments(phrase_array[0]);
+					Long [] each_phrase_docs;
+					if(mode)						// check if user wants to search by disk index or memory index
+						each_phrase_docs = inverted_index.pos_hash_list.getDocuments(phrase_array[0]);
+					else
+						each_phrase_docs = disk_inverted_index.getDocuments(phrase_array[0]);
 					
 					if(phrase_flag == false){
 						phrase_flag = true;
@@ -86,31 +98,47 @@ public class QueryProcessor {
 					}
 					
 					for(int j=1; j<phrase_array.length; j++){ 						//for each term in phrase
-						each_phrase_docs = intersect(each_phrase_docs, inverted_index.pos_hash_list.getDocuments(phrase_array[j]));
+						if(mode)						// check if user wants to search by disk index or memory index
+							each_phrase_docs = intersect(each_phrase_docs, inverted_index.pos_hash_list.getDocuments(phrase_array[j]));
+						else
+							each_phrase_docs = intersect(each_phrase_docs, disk_inverted_index.getDocuments(phrase_array[j]));
 					}
 					
 					phrase_docs = intersect(phrase_docs,each_phrase_docs);
-					phrase_docs = checkNearK(phrase_docs,phrase_array, 1);
+//					System.out.println("reached near k in phrase");
+					phrase_docs = checkNearK(phrase_docs,phrase_array, 1, mode);
 				}
 				String [] and_array = or_query_part.split("\"([^\"]*)\"");
 				Long [] and_docs = new Long[0];
 				for(int j=0; j<and_array.length;j++){ 								// for each AND
 					
-					String []and_terms = and_array[j].trim().split("[ ]+|-+");
+					String []and_terms = and_array[j].trim().split("[ ]+|[-]+");
+//					System.out.println("For each and terms "+Arrays.asList(and_terms));
 					for(int k=0; k<and_terms.length; k++)
 						and_terms[k] = new Stemmer().processWord(and_terms[k]);
 					for(String term : and_terms){
 						if(!term.isEmpty()){
+//							System.out.println("reached inside is empty");
 							if(and_flag==false){
-								and_docs = inverted_index.pos_hash_list.getDocuments(term);
+//								System.out.println("reached before and doc query");
+								if(mode)					// check if user wants to search by disk index or memory index
+									and_docs = union(and_docs,inverted_index.pos_hash_list.getDocuments(term));
+								else
+									and_docs = union(and_docs,disk_inverted_index.getDocuments(term));
+//								System.out.println("reached after and doc query");
 								and_flag=true;
 								continue;
 							}
-							and_docs = intersect(and_docs,inverted_index.pos_hash_list.getDocuments(term));
+							if(mode)
+								and_docs = intersect(and_docs,inverted_index.pos_hash_list.getDocuments(term));
+							else
+								and_docs = intersect(and_docs,disk_inverted_index.getDocuments(term));
 						}
 					}
+//					System.out.println("---------------------AND DOCS ["+j+"]---------------------"+Arrays.asList(and_docs));
 					if(near_k_flag){
-						and_docs = checkNearK(and_docs,and_terms, near_k);
+						and_docs = checkNearK(and_docs,and_terms, near_k, mode);
+//						System.out.println("reached near k in and");
 						near_k_flag = false;
 					}
 				}
@@ -120,10 +148,14 @@ public class QueryProcessor {
 					phrase_and_docs = phrase_docs;
 				else if(and_flag)
 					phrase_and_docs = and_docs;
+//				System.out.println("reached phrase and Union");
 				
-				all_query_docs = union(all_query_docs,phrase_and_docs); 			// union all ORs
+//				all_query_docs = union(all_query_docs,phrase_and_docs); 			// union all ORs
 			}
+//			System.out.println("reached or union");
+			all_query_docs = union(all_query_docs,phrase_and_docs); 			// union all ORs
 		}
+//		System.out.println("reached return");
 		return all_query_docs;
 	}
 	
@@ -155,6 +187,7 @@ public class QueryProcessor {
 	 */
 	
 	private Long[] union(Long[] phrase1_docs, Long[] phrase2_docs) {
+//		System.out.println("inside union");
 		Long [] combine_phrase_docs = new Long[phrase1_docs.length+phrase2_docs.length];
 		int j=0, k=0, i=0;
 		while(j<phrase1_docs.length || k<phrase2_docs.length){
@@ -171,6 +204,7 @@ public class QueryProcessor {
 				i++;k++;
 			}
 		}
+//		System.out.println("inside union output "+ Arrays.asList(combine_phrase_docs));
 		return combine_phrase_docs;
 	}
 	
@@ -178,17 +212,26 @@ public class QueryProcessor {
 	 * returns an array of documents with desired near k value
 	 */
 	
-	private Long[] checkNearK(Long [] document_list, String[] word_list, int k){
+	private Long[] checkNearK(Long [] document_list, String[] word_list, int k, boolean mode){
 		Long []near_k_doc_list = new Long[0];
 		for(Long document : document_list){
 			String first_word = word_list[0];
 			
-			Long [] first_word_positions = inverted_index.pos_hash_list.getPositions(first_word,document);
+			Long [] first_word_positions;
+			
+			if(mode)
+				first_word_positions = inverted_index.pos_hash_list.getPositions(first_word,document);
+			else
+				first_word_positions = disk_inverted_index.getPositions(first_word,document);
 			
 			for(Long first_word_position :  first_word_positions){
 				int i=1;
 				for(; i<word_list.length; i++ ){
 					Long [] word_positions = inverted_index.pos_hash_list.getPositions(word_list[i],document);
+					if(mode)
+						word_positions = inverted_index.pos_hash_list.getPositions(word_list[i],document);
+					else
+						word_positions = disk_inverted_index.getPositions(word_list[i],document);
 					if(! contains(word_positions,first_word_position+i,k)){
 						break;
 					}
@@ -224,29 +267,18 @@ public class QueryProcessor {
 	/**
 	 * prints the result to the output text field
 	 */
-	private void printResults(JTextArea result_txt) {
+	private String getOutputString() {
 		String output_string = "";
-		if (final_file_list.length > 0) {
+		if (final_file_list.length > 0 && final_file_list[0] != null) {
 			for (Long file_number : final_file_list) {
 				if(file_number != null)
 					output_string = output_string + inverted_index.files.get(file_number) + "\n";
 			}
-			result_txt.setText(output_string);
+			output_string += "Number of results : "+final_file_list.length + "\n";
 		} else {
-			result_txt.setText("NO RESULT FOUND.......\n");
+			output_string = "NO RESULT FOUND.......\n";
 		}
+		return output_string;
 	}
-	
-	/**
-	 * debug support functions
-	 */
-//	void printArray(Long [] array){
-//		for(Long a : array)
-//			System.out.println(a);
-//	}
-//	void printArray(String [] array){
-//		for(String a : array)
-//			System.out.println(a);
-//	}
 
 }

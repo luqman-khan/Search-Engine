@@ -7,6 +7,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.nio.file.Path; 
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+
 import javax.swing.JFileChooser;
 import javax.swing.JTextArea;
 import javax.swing.text.Utilities;
@@ -73,7 +75,15 @@ public class SearchPage {
 					folder_path_txt.setText(folderPath.toString());
 				}
 				index = new QueryProcessor(folderPath);
+				
+				long time = System.currentTimeMillis();
 				index.inverted_index.indexDirectory();
+				System.out.println("Time taken to make inverted index is : "+new SimpleDateFormat("mm,ss,sss").format(System.currentTimeMillis()-time));
+				
+//				time = System.currentTimeMillis();
+//				index.disk_index_writer.buildIndex(index.inverted_index);
+//				System.out.println("Time taken to make disk inverted index is : "+new SimpleDateFormat("mm,ss,sss").format(System.currentTimeMillis()-time));
+				
 			}
 		});
 		btnNewButton.setBounds(437, 10, 124, 23);
@@ -83,7 +93,7 @@ public class SearchPage {
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				result_txt.setText("");
-				index.processQuery(search_txt.getText(), result_txt);
+				result_txt.setText(index.processQuery(search_txt.getText(),true));
 			}
 		});
 		btnNewButton_1.setBounds(309, 10, 89, 23);

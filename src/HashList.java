@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -16,41 +17,73 @@ public class HashList {
 		if(!this.posting_list.containsKey(term))
 			this.posting_list.put(term, new ArrayList<Long>());
 
-		if(this.posting_list.get(term).isEmpty()){
-			this.posting_list.get(term).add(new Long(2));//last doc id
-			this.posting_list.get(term).add(new Long(1));// store doc frequence in second position
-			this.posting_list.get(term).add(doc_id);//doc id
-			this.posting_list.get(term).add(new Long(0)); // term freq
-			this.posting_list.get(term).add(new Long(1)); // term rank
+		ArrayList<Long> testList;
+		testList = this.posting_list.get(term);
+		if(testList.isEmpty()){
+			testList.add(new Long(2));//last doc id
+			testList.add(new Long(1));// store doc frequence in second position
+			testList.add(doc_id);//doc id
+			testList.add(new Long(0)); // term freq
+			testList.add(new Long(1)); // term rank
 		}
-		if(this.posting_list.get(term).get(this.posting_list.get(term).get(0).intValue()) != doc_id){
-			this.posting_list.get(term).set(1, this.posting_list.get(term).get(1)+1); // update doc freq
-			this.posting_list.get(term).add(doc_id); // add new doc id
-			this.posting_list.get(term).set(0, new Long(this.posting_list.get(term).size()-1));// update the position of last doc id
-			this.posting_list.get(term).add(new Long(0)); // term freq
-			this.posting_list.get(term).add(new Long(1)); // term rank
+		
+		
+//		if(this.posting_list.get(term).isEmpty()){
+//			this.posting_list.get(term).add(new Long(2));//last doc id
+//			this.posting_list.get(term).add(new Long(1));// store doc frequence in second position
+//			this.posting_list.get(term).add(doc_id);//doc id
+//			this.posting_list.get(term).add(new Long(0)); // term freq
+//			this.posting_list.get(term).add(new Long(1)); // term rank
+//		}
+		
+		
+		if(testList.get(testList.get(0).intValue()) != doc_id){
+			testList.set(1, testList.get(1)+1); // update doc freq
+			testList.add(doc_id); // add new doc id
+			testList.set(0, new Long(testList.size()-1));// update the position of last doc id
+			testList.add(new Long(0)); // term freq
+			testList.add(new Long(1)); // term rank
 		}
-		this.posting_list.get(term).add(position);
-		int freq_pos = (this.posting_list.get(term).get(0)).intValue()+1;
-		this.posting_list.get(term).set(freq_pos, this.posting_list.get(term).get(freq_pos)+1 );
+		
+		
+		
+//		if(this.posting_list.get(term).get(this.posting_list.get(term).get(0).intValue()) != doc_id){
+//			this.posting_list.get(term).set(1, this.posting_list.get(term).get(1)+1); // update doc freq
+//			this.posting_list.get(term).add(doc_id); // add new doc id
+//			this.posting_list.get(term).set(0, new Long(this.posting_list.get(term).size()-1));// update the position of last doc id
+//			this.posting_list.get(term).add(new Long(0)); // term freq
+//			this.posting_list.get(term).add(new Long(1)); // term rank
+//		}
+		
+		testList.add(position);
+		int freq_pos = (testList.get(0)).intValue()+1;
+		testList.set(freq_pos, testList.get(freq_pos)+1 );
+		
+//		
+//		this.posting_list.get(term).add(position);
+//		int freq_pos = (this.posting_list.get(term).get(0)).intValue()+1;
+//		this.posting_list.get(term).set(freq_pos, this.posting_list.get(term).get(freq_pos)+1 );
 	}
 	
-	void print(){
-		for(String key : this.posting_list.keySet()){
-		}
-	}
 	
 	Long[] getDocuments(String term){
 		Long[] documents = new Long[0];
-		if(this.posting_list.get(term) != null){
-			long doc_frequency = this.posting_list.get(term).get(1); // get number of documents with that term
+		ArrayList<Long> testList;
+		testList = this.posting_list.get(term);
+//		System.out.println("inside getDocuments");
+		if(testList != null){
+//			System.out.println("inside test list not null");
+			long doc_frequency = testList.get(1); // get number of documents with that term
 			documents = new Long[(int)doc_frequency];
 			int doc_id_pos = 2;
 			for(int i = 0 ;i<doc_frequency; i++){
-				documents[i]=this.posting_list.get(term).get(doc_id_pos);
-				doc_id_pos = doc_id_pos + this.posting_list.get(term).get(doc_id_pos+1).intValue() + 3;
+				documents[i]=testList.get(doc_id_pos);
+				doc_id_pos = doc_id_pos + testList.get(doc_id_pos+1).intValue() + 3;
 			}
+//			System.out.println("done accumulationg documents");
+//			System.out.println("After done accumulationg documents 1 : length : "+documents.length + Arrays.asList(documents));
 		}
+//		System.out.println("After done accumulationg documents 2 : "+ Arrays.asList(documents));
 		return documents;
 	}
 	
@@ -78,7 +111,9 @@ public class HashList {
 		ArrayList<Long> postings = this.posting_list.get(term);
 		if(postings!=null){
 			int i=2; // position of first document ID
-			while(i<postings.size() && postings.get(i)!=document){ //get the starting position of document ID
+			while(i<postings.size()){ //get the starting position of document ID
+				if(postings.get(i).equals(document))
+					break;
 				i = i+3+postings.get(i+1).intValue();
 			}
 			if(i<postings.size()){

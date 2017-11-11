@@ -7,6 +7,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
+import java.util.Set;
 
 import javax.swing.JTextArea;
 
@@ -41,7 +42,6 @@ public class InvertedIndex {
 
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
 					if (file.toString().endsWith(".txt")) {
-//						buildDictionary(file, file_count, pos_dictionary);
 						buildDictionary(file, file_count);
 						files.put(file_count, file.getFileName().toString());
 						file_count++;
@@ -73,21 +73,10 @@ public class InvertedIndex {
 						for(String i : word_array){
 							if(!i.isEmpty() && !i.equals("[ ]+")){
 								i = new Stemmer().processWord(i);
-								System.out.println(i);
 								pos_hash_list.add(file_number,i,word_count);
 								word_count++;
 							}
 						}
-//						if (!pos_dictionary.containsKey(word)) {
-//							HashMap<Long, String> pos_hash = new HashMap<Long, String>();
-//							pos_dictionary.put(word, pos_hash);
-//						}
-//						if (!pos_dictionary.get(word).containsKey(file_number)) {
-//							pos_dictionary.get(word).put(file_number, "");
-//						}
-//						pos_dictionary.get(word).put(file_number,
-//								pos_dictionary.get(word).get(file_number) + word_count + ",");
-//						word_count++;
 					}
 				}
 			}
@@ -98,10 +87,16 @@ public class InvertedIndex {
 	/**
 	 * outputs the vocab word list (stemmed)
 	 */
-	public void indexPrint(JTextArea result_txt) {
+	public String indexPrint() {
 		String vocab_string = "";
 		for (Iterator<String> i = pos_hash_list.keySet().iterator(); i.hasNext();)
 			vocab_string = vocab_string + "\n" + i.next();
-		result_txt.setText(vocab_string);
+		return vocab_string;
+	}
+	public String[] getDictionary() {
+		// TODO Auto-generated method stub
+		Set<String> terms_set = this.pos_hash_list.keySet();
+		String [] terms = terms_set.toArray(new String [terms_set.size()]);
+		return terms;
 	}
 }
