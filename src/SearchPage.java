@@ -81,11 +81,17 @@ public class SearchPage {
 				
 				long time = System.currentTimeMillis();
 				index.inverted_index.indexDirectory();
+//				String [] term_list = index.inverted_index.getDictionary();
+//				for(int i =0;i<term_list[i].length();i++){
+//				index.inverted_index.calculateWdt(index.inverted_index.pos_hash_list);	
+//			    }
+				index.inverted_index.calculateWdt(index.inverted_index.pos_hash_list);
 				System.out.println("Time taken to make inverted index is : "+new SimpleDateFormat("mm,ss,sss").format(System.currentTimeMillis()-time));
 				
-//				time = System.currentTimeMillis();
-//				index.disk_index_writer.buildIndex(index.inverted_index);
-//				System.out.println("Time taken to make disk inverted index is : "+new SimpleDateFormat("mm,ss,sss").format(System.currentTimeMillis()-time));
+				time = System.currentTimeMillis();
+				index.disk_index_writer.buildIndex(index.inverted_index);
+				
+				System.out.println("Time taken to make disk inverted index is : "+new SimpleDateFormat("mm,ss,sss").format(System.currentTimeMillis()-time));
 				
 			}
 		});
