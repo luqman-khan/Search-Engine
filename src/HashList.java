@@ -83,7 +83,7 @@ public class HashList {
 //			System.out.println("done accumulationg documents");
 //			System.out.println("After done accumulationg documents 1 : length : "+documents.length + Arrays.asList(documents));
 		}
-//		System.out.println("After done accumulationg documents 2 : "+ Arrays.asList(documents));
+		System.out.println("After done accumulationg documents :"+term);
 		return documents;
 	}
 	

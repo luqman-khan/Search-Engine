@@ -1,3 +1,5 @@
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 //import java.util.Arrays;
@@ -63,7 +65,7 @@ public class QueryProcessor {
 			near_k_flag = true;
 		}
 		final_file_list = getDocForQuery(input, mode);
-		result_string = getOutputString();
+		result_string = getOutputString(mode);
 		return result_string;
 	}
 	
@@ -117,28 +119,55 @@ public class QueryProcessor {
 					for(int k=0; k<and_terms.length; k++)
 						and_terms[k] = new Stemmer().processWord(and_terms[k]);
 					for(String term : and_terms){
+						System.out.println("Term "+i+" is "+term);
 						if(!term.isEmpty()){
 //							System.out.println("reached inside is empty");
-							if(and_flag==false){
+							if(and_flag==false){ // run only on first term of and query
+								
 //								System.out.println("reached before and doc query");
+//								System.out.println("/////////////////////////////////"+Arrays.asList(disk_inverted_index.getDocuments(term)));
 								if(mode)					// check if user wants to search by disk index or memory index
 									and_docs = union(and_docs,inverted_index.pos_hash_list.getDocuments(term));
 								else
 									and_docs = union(and_docs,disk_inverted_index.getDocuments(term));
+								
 //								System.out.println("reached after and doc query");
+//								
+//								try {
+//									new DataInputStream(System.in).readLine();
+//								} catch (IOException e) {
+//									// TODO Auto-generated catch block
+//									e.printStackTrace();
+//								}
+								
 								and_flag=true;
 								continue;
 							}
+							
+//							System.out.println("reached Intersect after and doc query");
+//							try {
+//								new DataInputStream(System.in).readLine();
+//							} catch (IOException e) {
+//								// TODO Auto-generated catch block
+//								e.printStackTrace();
+//							}
+//							
 							if(mode)
 								and_docs = intersect(and_docs,inverted_index.pos_hash_list.getDocuments(term));
 							else
 								and_docs = intersect(and_docs,disk_inverted_index.getDocuments(term));
 						}
 					}
-//					System.out.println("---------------------AND DOCS ["+j+"]---------------------"+Arrays.asList(and_docs));
+					System.out.println("---------------------AND DOCS ["+j+"]---------------------"+Arrays.asList(and_docs));
+//					try {
+//						new DataInputStream(System.in).readLine();
+//					} catch (IOException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
 					if(near_k_flag){
 						and_docs = checkNearK(and_docs,and_terms, near_k, mode);
-//						System.out.println("reached near k in and");
+						System.out.println("reached near k in and");
 						near_k_flag = false;
 					}
 				}
@@ -149,6 +178,12 @@ public class QueryProcessor {
 				else if(and_flag)
 					phrase_and_docs = and_docs;
 //				System.out.println("reached phrase and Union");
+//				try {
+//					new DataInputStream(System.in).readLine();
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 				
 //				all_query_docs = union(all_query_docs,phrase_and_docs); 			// union all ORs
 			}
@@ -165,10 +200,18 @@ public class QueryProcessor {
 	private Long[] intersect(Long[] phrase1_docs, Long[] phrase2_docs) {
 		Long [] combine_phrase_docs = new Long[phrase1_docs.length];
 		int j=0, k=0, i=0;
+//		System.out.println("Before while inside intersect");
+//		try {
+//			new DataInputStream(System.in).readLine();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		while(j<phrase1_docs.length&&k<phrase2_docs.length){
-			if(phrase1_docs[j] == null || phrase2_docs[k] == null)
+			System.out.println("phrase 1 is "+phrase1_docs[j]+" phrase 2 is "+phrase2_docs[k]);
+			if(phrase1_docs[j] == null || phrase2_docs[k]== null)
 				break;
-			else if(phrase1_docs[j]==phrase2_docs[k]){
+			if(phrase1_docs[j].equals(phrase2_docs[k])){
 				combine_phrase_docs[i]=phrase1_docs[j];
 				i++;j++;k++;
 			}
@@ -178,7 +221,21 @@ public class QueryProcessor {
 			else if(phrase1_docs[j]>phrase2_docs[k]){
 				k++;
 			}
+//			System.out.println("i = "+i+" j = "+j+" k = "+k);
+//			try {
+//				new DataInputStream(System.in).readLine();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 		}
+//		System.out.println("Before while inside intersect "+ Arrays.asList(combine_phrase_docs));
+//		try {
+//			new DataInputStream(System.in).readLine();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		return combine_phrase_docs;
 	}
 	
@@ -191,7 +248,7 @@ public class QueryProcessor {
 		Long [] combine_phrase_docs = new Long[phrase1_docs.length+phrase2_docs.length];
 		int j=0, k=0, i=0;
 		while(j<phrase1_docs.length || k<phrase2_docs.length){
-			if((j<phrase1_docs.length && k<phrase2_docs.length) && phrase1_docs[j]==phrase2_docs[k]){
+			if((j<phrase1_docs.length && k<phrase2_docs.length) && phrase1_docs[j].equals(phrase2_docs[k])){
 				combine_phrase_docs[i]=phrase1_docs[j];
 				i++;j++;k++;
 			}
@@ -215,30 +272,32 @@ public class QueryProcessor {
 	private Long[] checkNearK(Long [] document_list, String[] word_list, int k, boolean mode){
 		Long []near_k_doc_list = new Long[0];
 		for(Long document : document_list){
-			String first_word = word_list[0];
-			
-			Long [] first_word_positions;
-			
-			if(mode)
-				first_word_positions = inverted_index.pos_hash_list.getPositions(first_word,document);
-			else
-				first_word_positions = disk_inverted_index.getPositions(first_word,document);
-			
-			for(Long first_word_position :  first_word_positions){
-				int i=1;
-				for(; i<word_list.length; i++ ){
-					Long [] word_positions = inverted_index.pos_hash_list.getPositions(word_list[i],document);
-					if(mode)
-						word_positions = inverted_index.pos_hash_list.getPositions(word_list[i],document);
-					else
-						word_positions = disk_inverted_index.getPositions(word_list[i],document);
-					if(! contains(word_positions,first_word_position+i,k)){
-						break;
+			if(document != null){
+				String first_word = word_list[0];
+
+				Long[] first_word_positions;
+
+				if (mode)
+					first_word_positions = inverted_index.pos_hash_list.getPositions(first_word, document);
+				else
+					first_word_positions = disk_inverted_index.getPositions(first_word, document);
+
+				for (Long first_word_position : first_word_positions) {
+					int i = 1;
+					for (; i < word_list.length; i++) {
+						Long[] word_positions = inverted_index.pos_hash_list.getPositions(word_list[i], document);
+						if (mode)
+							word_positions = inverted_index.pos_hash_list.getPositions(word_list[i], document);
+						else
+							word_positions = disk_inverted_index.getPositions(word_list[i], document);
+						if (!contains(word_positions, first_word_position + i, k)) {
+							break;
+						}
 					}
-				}
-				if(i==word_list.length){
-					Long [] new_document = {document};
-					near_k_doc_list = union(near_k_doc_list, new_document);
+					if (i == word_list.length) {
+						Long[] new_document = { document };
+						near_k_doc_list = union(near_k_doc_list, new_document);
+					}
 				}
 			}
 		}
@@ -267,14 +326,20 @@ public class QueryProcessor {
 	/**
 	 * prints the result to the output text field
 	 */
-	private String getOutputString() {
+	private String getOutputString(boolean mode) {
 		String output_string = "";
+		int file_count = 0;
 		if (final_file_list.length > 0 && final_file_list[0] != null) {
 			for (Long file_number : final_file_list) {
-				if(file_number != null)
-					output_string = output_string + inverted_index.files.get(file_number) + "\n";
+				if(file_number != null){
+					file_count++;
+					if(mode)
+						output_string = output_string + inverted_index.files.get(file_number) + "\n";
+					else
+						output_string = output_string + inverted_index.files.get(file_number) + "\n";
+				}
 			}
-			output_string += "Number of results : "+final_file_list.length + "\n";
+			output_string += "Number of results : "+file_count + "\n";
 		} else {
 			output_string = "NO RESULT FOUND.......\n";
 		}

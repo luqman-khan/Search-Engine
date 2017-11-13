@@ -37,20 +37,19 @@ public class DiskInvertedIndex {
          // read the 8 bytes for the document frequency
          byte[] byteDocFreq = new byte[8];
          postings.read(byteDocFreq, 0, byteDocFreq.length);
-         System.out.println("The document frequency is "+ ByteBuffer.wrap(byteDocFreq).getLong());
          // use ByteBuffer to convert the 4 bytes into an int.
          Long documentFrequency = ByteBuffer.wrap(byteDocFreq).getLong();
          
          List <Long> DocIdList = new ArrayList<Long>();
          Long seekPosition = postingsPosition;
-         System.out.print("[ "+documentFrequency+" , ");
-         for(int i=0; i<15;i++){
-        	 seekPosition += 8;
-        	 byte[] x = new byte[8];
-             postings.read(x, 0, x.length);
-             System.out.print(ByteBuffer.wrap(x).getLong()+" , ");
-         }
-         System.out.println(" ]");
+//         System.out.print("[ "+documentFrequency+" , ");
+//         for(int i=0; i<15;i++){
+//        	 seekPosition += 8;
+//        	 byte[] x = new byte[8];
+//             postings.read(x, 0, x.length);
+//             System.out.print(ByteBuffer.wrap(x).getLong()+" , ");
+//         }
+//         System.out.println(" ]");
          
          seekPosition = postingsPosition+8; // seek to first doc id
          Long previousDocId = new Long(0);
@@ -131,7 +130,6 @@ public class DiskInvertedIndex {
           seekPosition+=8;	//move to term rank
           seekPosition+=8; // move to first term position
           Long previousPosition = new Long(0);
-          System.out.println("term frequency = "+termFreq);
           for(int i=0; i<termFreq; i++){	// decode gap and fill the position into position array
         	  postings.seek(seekPosition);
         	  byte[] byteTermPosition = new byte[8];

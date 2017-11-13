@@ -14,16 +14,19 @@ import javax.swing.JTextArea;
 import javax.swing.text.Utilities;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.IOException;
+import javax.swing.JRadioButton;
 
 public class SearchPage {
 	private JFrame frame;
 	private JTextField folder_path_txt;
 	private JTextField search_txt;
 	private QueryProcessor index;
-	private JTextArea suggestion_txt;
 	private JTextArea result_txt;
 	private JScrollPane scrollPane;
+	private JRadioButton disk_index_rbtn;
 
 	/**
 	 * Launch the application.
@@ -93,7 +96,7 @@ public class SearchPage {
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				result_txt.setText("");
-				result_txt.setText(index.processQuery(search_txt.getText(),true));
+				result_txt.setText(index.processQuery(search_txt.getText(), disk_index_rbtn.isSelected()? false: true));
 			}
 		});
 		btnNewButton_1.setBounds(309, 10, 89, 23);
@@ -103,10 +106,6 @@ public class SearchPage {
 		search_txt.setBounds(10, 11, 289, 20);
 		frame.getContentPane().add(search_txt);
 		search_txt.setColumns(10);
-
-		suggestion_txt = new JTextArea();
-		suggestion_txt.setBounds(10, 60, 388, 680);
-		frame.getContentPane().add(suggestion_txt);
 		
 		scrollPane = new JScrollPane();
 		scrollPane.setBounds(437, 60, 807, 680);
@@ -115,6 +114,10 @@ public class SearchPage {
 		result_txt = new JTextArea();
 		scrollPane.setViewportView(result_txt);
 				result_txt.setEditable(false);
+				
+				disk_index_rbtn = new JRadioButton("Use DIsk Index");
+				disk_index_rbtn.setBounds(22, 62, 109, 23);
+				frame.getContentPane().add(disk_index_rbtn);
 				
 				result_txt.addMouseListener(new MouseAdapter() {
 					@Override

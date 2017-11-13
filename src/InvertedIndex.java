@@ -46,6 +46,7 @@ public class InvertedIndex {
 						files.put(file_count, file.getFileName().toString());
 						file_count++;
 					}
+					
 					return FileVisitResult.CONTINUE;
 				}
 
@@ -81,7 +82,7 @@ public class InvertedIndex {
 				}
 			}
 		} catch (IOException ex) {}
-
+		
 	}
 	
 	/**
