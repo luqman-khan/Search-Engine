@@ -1,6 +1,5 @@
-package vbe;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -14,20 +13,20 @@ public class VariableByteEncodingCLass {
 	/**
 	 * Encode function to fetch encoded bytes.
 	 */
-	protected List<Byte> encode(int[] numbers) {
+	protected Byte[] encode(Long[] numbers) {
 		List<Byte> byteStreamArray = new ArrayList<Byte>();
-		for (int number : numbers) {
+		for (Long number : numbers) {
 			byteStreamArray.addAll(encodeNumber(number));
 		}
-		return byteStreamArray;
+		return byteStreamArray.toArray(new Byte[byteStreamArray.size()]);
 	}
 	
 	/**
 	 * Conversion of integer to bytes as per algorithm in 'Introduction to Information Retrieval'.
 	 */
-	protected List<Byte> encodeNumber(int number) {
+	private List<Byte> encodeNumber(Long number) {
 		List<Byte> bytesArrayList = new ArrayList<Byte>();
-		int n = number;
+		Long n = number;
 		while (true) {
 			bytesArrayList.add(0, (byte) (n % 128));
 			if (n < 128) {
@@ -42,26 +41,26 @@ public class VariableByteEncodingCLass {
 	/**
 	 * Decode function to retrieve integer from byte.
 	 */
-	protected List<Integer> decode(List<Byte> byteStreamArray) {
-		List<Integer> intArrayList = new ArrayList<Integer>();
-		int n = 0;
+	protected Long[] decode(Byte[] byteStreamArray) {
+		List<Long> longArrayList = new ArrayList<Long>();
+		Long n = new Long(0);
 		for (Byte abyte : byteStreamArray) {
-			int an_int = getIntValue(abyte.byteValue(), n);
+			int an_int = getIntValue(abyte.byteValue());
 			if (an_int < 128) {
 				n = (n * 128) + an_int;
 			} else {
 				n = (n * 128) + (an_int - 128);
-				intArrayList.add(n);
-				n = 0;
+				longArrayList.add(n);
+				n = new Long(0);
 			}
 		}
-		return intArrayList;
+		return longArrayList.toArray(new Long[longArrayList.size()]);
 	}
 
 	/**
 	 * Byte to Integer conversion.
 	 */
-	private int getIntValue(Byte a_byte, int n) {
+	private int getIntValue(Byte a_byte) {
 		return a_byte & MASK;
 	}
 	
@@ -72,13 +71,13 @@ public class VariableByteEncodingCLass {
 		
 		VariableByteEncodingCLass vbeObj = new VariableByteEncodingCLass();
 		Scanner scanner = new Scanner(System.in);
-		int[] my_int_array = new int[] { 333, 22, 11,12312, 2 };
-		List<Byte> encoded_array = new ArrayList<Byte>();
-		List<Integer> decoded_array = new ArrayList<Integer>();
-		encoded_array = vbeObj.encode(my_int_array);
+		Long[] my_long_array = {new Long(555), new Long(456), new Long(200), new Long(150)};
+		Byte[] encoded_array;
+		Long[] decoded_array;
+		encoded_array = vbeObj.encode(my_long_array);
 		decoded_array = vbeObj.decode(encoded_array);
-		System.out.println("\n Encoded :" + encoded_array);
-		System.out.println("\n Decoded :" + decoded_array);
+		System.out.println("\n Encoded :" + Arrays.asList(encoded_array));
+		System.out.println("\n Decoded :" + Arrays.asList(decoded_array));
 
 		scanner.close();
 	}
