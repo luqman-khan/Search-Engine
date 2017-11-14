@@ -2,6 +2,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.PriorityQueue;
 //import java.util.Arrays;
 //import java.util.HashMap;
 //import java.util.Iterator;
@@ -90,7 +91,8 @@ public class QueryProcessor {
 						phrase_array[j] = new Stemmer().processWord(phrase_array[j]);
 					Long [] each_phrase_docs;
 					if(mode)						// check if user wants to search by disk index or memory index
-						each_phrase_docs = inverted_index.pos_hash_list.getDocuments(phrase_array[0]);
+						each_phrase_docs = inverted_index.pos_hash_list.getDocumentsScore(phrase_array[0]);
+//						each_phrase_docs = inverted_index.pos_hash_list.getDocuments(phrase_array[0]);
 					else
 						each_phrase_docs = disk_inverted_index.getDocuments(phrase_array[0]);
 					
@@ -101,7 +103,8 @@ public class QueryProcessor {
 					
 					for(int j=1; j<phrase_array.length; j++){ 						//for each term in phrase
 						if(mode)						// check if user wants to search by disk index or memory index
-							each_phrase_docs = intersect(each_phrase_docs, inverted_index.pos_hash_list.getDocuments(phrase_array[j]));
+							each_phrase_docs = intersect(each_phrase_docs, inverted_index.pos_hash_list.getDocumentsScore(phrase_array[j]));
+//							each_phrase_docs = intersect(each_phrase_docs, inverted_index.pos_hash_list.getDocuments(phrase_array[j]));
 						else
 							each_phrase_docs = intersect(each_phrase_docs, disk_inverted_index.getDocuments(phrase_array[j]));
 					}
@@ -119,7 +122,7 @@ public class QueryProcessor {
 					for(int k=0; k<and_terms.length; k++)
 						and_terms[k] = new Stemmer().processWord(and_terms[k]);
 					for(String term : and_terms){
-						System.out.println("Term "+i+" is "+term);
+//						System.out.println("Term "+i+" is "+term);
 						if(!term.isEmpty()){
 //							System.out.println("reached inside is empty");
 							if(and_flag==false){ // run only on first term of and query
@@ -127,7 +130,8 @@ public class QueryProcessor {
 //								System.out.println("reached before and doc query");
 //								System.out.println("/////////////////////////////////"+Arrays.asList(disk_inverted_index.getDocuments(term)));
 								if(mode)					// check if user wants to search by disk index or memory index
-									and_docs = union(and_docs,inverted_index.pos_hash_list.getDocuments(term));
+									and_docs = union(and_docs,inverted_index.pos_hash_list.getDocumentsScore(term));
+//									and_docs = union(and_docs,inverted_index.pos_hash_list.getDocuments(term));
 								else
 									and_docs = union(and_docs,disk_inverted_index.getDocuments(term));
 								
@@ -153,12 +157,13 @@ public class QueryProcessor {
 //							}
 //							
 							if(mode)
-								and_docs = intersect(and_docs,inverted_index.pos_hash_list.getDocuments(term));
+								and_docs = intersect(and_docs,inverted_index.pos_hash_list.getDocumentsScore(term));
+//								and_docs = intersect(and_docs,inverted_index.pos_hash_list.getDocuments(term));
 							else
 								and_docs = intersect(and_docs,disk_inverted_index.getDocuments(term));
 						}
 					}
-					System.out.println("---------------------AND DOCS ["+j+"]---------------------"+Arrays.asList(and_docs));
+//					System.out.println("---------------------AND DOCS ["+j+"]---------------------"+Arrays.asList(and_docs));
 //					try {
 //						new DataInputStream(System.in).readLine();
 //					} catch (IOException e) {
@@ -167,7 +172,7 @@ public class QueryProcessor {
 //					}
 					if(near_k_flag){
 						and_docs = checkNearK(and_docs,and_terms, near_k, mode);
-						System.out.println("reached near k in and");
+//						System.out.println("reached near k in and");
 						near_k_flag = false;
 					}
 				}
@@ -191,7 +196,26 @@ public class QueryProcessor {
 			all_query_docs = union(all_query_docs,phrase_and_docs); 			// union all ORs
 		}
 //		System.out.println("reached return");
+		all_query_docs = getTopK(10,all_query_docs);
+		
 		return all_query_docs;
+	}
+	
+	private Long[] getTopK(int k, Long[] documentsScore){
+		PriorityQueue<DocScore> all_docs_queue = new PriorityQueue<>();
+		for(int i=0;i<documentsScore.length;i+=2){
+			all_docs_queue.add(new DocScore(documentsScore[i], documentsScore[i+1])); // add document id and score to the queue
+		}
+		Long[] topKDocScore = new Long[2*k];
+		DocScore docScore;
+		for(int i=0;i<k;i++){
+			docScore = all_docs_queue.poll();
+			if(docScore==null)
+				break;
+			topKDocScore[i]=docScore.docId;i++;
+			topKDocScore[i]=docScore.score;
+		}
+		return topKDocScore;
 	}
 	
 	/**
@@ -200,34 +224,21 @@ public class QueryProcessor {
 	private Long[] intersect(Long[] phrase1_docs, Long[] phrase2_docs) {
 		Long [] combine_phrase_docs = new Long[phrase1_docs.length];
 		int j=0, k=0, i=0;
-//		System.out.println("Before while inside intersect");
-//		try {
-//			new DataInputStream(System.in).readLine();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		
 		while(j<phrase1_docs.length&&k<phrase2_docs.length){
-			System.out.println("phrase 1 is "+phrase1_docs[j]+" phrase 2 is "+phrase2_docs[k]);
+//			System.out.println("phrase 1 is "+phrase1_docs[j]+" phrase 2 is "+phrase2_docs[k]);
 			if(phrase1_docs[j] == null || phrase2_docs[k]== null)
 				break;
 			if(phrase1_docs[j].equals(phrase2_docs[k])){
-				combine_phrase_docs[i]=phrase1_docs[j];
-				i++;j++;k++;
+				combine_phrase_docs[i]=phrase1_docs[j]; i++;j++;k++; // copy doc id
+				combine_phrase_docs[i]=phrase1_docs[j]+phrase2_docs[k];i++;j++;k++; // add and copy score
 			}
 			else if(phrase1_docs[j]<phrase2_docs[k]){
-				j++;
+				j+=2;
 			}
 			else if(phrase1_docs[j]>phrase2_docs[k]){
-				k++;
+				k+=2;
 			}
-//			System.out.println("i = "+i+" j = "+j+" k = "+k);
-//			try {
-//				new DataInputStream(System.in).readLine();
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
 		}
 //		System.out.println("Before while inside intersect "+ Arrays.asList(combine_phrase_docs));
 //		try {
@@ -248,17 +259,17 @@ public class QueryProcessor {
 		Long [] combine_phrase_docs = new Long[phrase1_docs.length+phrase2_docs.length];
 		int j=0, k=0, i=0;
 		while(j<phrase1_docs.length || k<phrase2_docs.length){
-			if((j<phrase1_docs.length && k<phrase2_docs.length) && phrase1_docs[j].equals(phrase2_docs[k])){
-				combine_phrase_docs[i]=phrase1_docs[j];
-				i++;j++;k++;
+			if((j<phrase1_docs.length && k<phrase2_docs.length) && (phrase1_docs[j]!=null && phrase2_docs[k]!= null) && phrase1_docs[j].equals(phrase2_docs[k])){
+				combine_phrase_docs[i]=phrase1_docs[j];i++;j++;k++;	// save the document id 
+				combine_phrase_docs[i]=phrase1_docs[j]+phrase2_docs[k];i++;j++;k++; // add the score and save the document id
 			}
-			else if(k>=phrase2_docs.length || (phrase1_docs.length > j && phrase1_docs[j]<phrase2_docs[k])){
-				combine_phrase_docs[i]=phrase1_docs[j];
-				i++;j++;
+			else if((k>=phrase2_docs.length && phrase1_docs.length > j) || (phrase1_docs.length > j && phrase1_docs[j]<phrase2_docs[k])){
+				combine_phrase_docs[i]=phrase1_docs[j];i++;j++;	// save the document id 
+				combine_phrase_docs[i]=phrase1_docs[j];i++;j++; // add the score and save the document id
 			}
-			else if(j>=phrase1_docs.length || (phrase2_docs.length > k && phrase1_docs[j]>phrase2_docs[k])){
-				combine_phrase_docs[i]=phrase2_docs[k];
-				i++;k++;
+			else if((j>=phrase1_docs.length && phrase2_docs.length > k) || (phrase2_docs.length > k && phrase1_docs[j]>phrase2_docs[k])){
+				combine_phrase_docs[i]=phrase2_docs[k];i++;k++;	// save the document id 
+				combine_phrase_docs[i]=phrase2_docs[k];i++;k++; // add the score and save the document id
 			}
 		}
 //		System.out.println("inside union output "+ Arrays.asList(combine_phrase_docs));
@@ -269,9 +280,12 @@ public class QueryProcessor {
 	 * returns an array of documents with desired near k value
 	 */
 	
-	private Long[] checkNearK(Long [] document_list, String[] word_list, int k, boolean mode){
+	private Long[] checkNearK(Long [] document_score_list, String[] word_list, int k, boolean mode){
 		Long []near_k_doc_list = new Long[0];
-		for(Long document : document_list){
+		Long document,score;
+		for(int d=0; d<document_score_list.length;d+=2){
+			document = document_score_list[d];
+			score = document_score_list[d+1];
 			if(document != null){
 				String first_word = word_list[0];
 
@@ -295,7 +309,7 @@ public class QueryProcessor {
 						}
 					}
 					if (i == word_list.length) {
-						Long[] new_document = { document };
+						Long[] new_document = { document,score };
 						near_k_doc_list = union(near_k_doc_list, new_document);
 					}
 				}
@@ -330,13 +344,15 @@ public class QueryProcessor {
 		String output_string = "";
 		int file_count = 0;
 		if (final_file_list.length > 0 && final_file_list[0] != null) {
-			for (Long file_number : final_file_list) {
+			Long file_number;
+			for (int i=final_file_list.length-2;i>-1;i-=2) {
+				file_number = final_file_list[i];
 				if(file_number != null){
 					file_count++;
 					if(mode)
-						output_string = output_string + inverted_index.files.get(file_number) + "\n";
+						output_string = output_string + inverted_index.files.get(file_number) +"\t"+final_file_list[i+1]+ "\n";
 					else
-						output_string = output_string + inverted_index.files.get(file_number) + "\n";
+						output_string = output_string + inverted_index.files.get(file_number) +"\t"+final_file_list[i+1]+ "\n";
 				}
 			}
 			output_string += "Number of results : "+file_count + "\n";

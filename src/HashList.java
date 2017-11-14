@@ -7,6 +7,8 @@ public class HashList {
 
 	HashMap<String, ArrayList<Long>> posting_list;
 	private int doc_id_pos, term_freq_pos;
+	protected ArrayList<Double> docWeightsArray = new ArrayList<>();
+	protected Long total_docs = new Long(0);
 
 	HashList() {
 		posting_list = new HashMap<>();
@@ -27,15 +29,6 @@ public class HashList {
 			testList.add(new Long(1)); // term rank wdt
 		}
 
-		// if(this.posting_list.get(term).isEmpty()){
-		// this.posting_list.get(term).add(new Long(2));//last doc id
-		// this.posting_list.get(term).add(new Long(1));// store doc frequence
-		// in second position
-		// this.posting_list.get(term).add(doc_id);//doc id
-		// this.posting_list.get(term).add(new Long(0)); // term freq
-		// this.posting_list.get(term).add(new Long(1)); // term rank
-		// }
-
 		if (testList.get(testList.get(0).intValue()) != doc_id) {
 			testList.set(1, testList.get(1) + 1); // update doc freq
 			testList.add(doc_id); // add new doc id
@@ -46,27 +39,9 @@ public class HashList {
 			testList.add(new Long(1)); // term rank
 		}
 
-		// if(this.posting_list.get(term).get(this.posting_list.get(term).get(0).intValue())
-		// != doc_id){
-		// this.posting_list.get(term).set(1,
-		// this.posting_list.get(term).get(1)+1); // update doc freq
-		// this.posting_list.get(term).add(doc_id); // add new doc id
-		// this.posting_list.get(term).set(0, new
-		// Long(this.posting_list.get(term).size()-1));// update the position of
-		// last doc id
-		// this.posting_list.get(term).add(new Long(0)); // term freq
-		// this.posting_list.get(term).add(new Long(1)); // term rank
-		// }
-
 		testList.add(position);
 		int freq_pos = (testList.get(0)).intValue() + 1;
 		testList.set(freq_pos, testList.get(freq_pos) + 1);
-
-		//
-		// this.posting_list.get(term).add(position);
-		// int freq_pos = (this.posting_list.get(term).get(0)).intValue()+1;
-		// this.posting_list.get(term).set(freq_pos,
-		// this.posting_list.get(term).get(freq_pos)+1 );
 	}
 
 	Long[] getDocuments(String term) {
@@ -88,12 +63,13 @@ public class HashList {
 			// System.out.println("After done accumulationg documents 1 : length
 			// : "+documents.length + Arrays.asList(documents));
 		}
-		System.out.println("After done accumulationg documents :"+term);
+//		System.out.println("After done accumulationg documents :"+term);
 		return documents;
 	}
-
-	Long[] getTermFreq(String term) {
-		Long[] term_freq_array = new Long[0];
+	
+	
+	Long[] getDocumentsScore(String term) {
+		Long[] documentsScore = new Long[0];
 		ArrayList<Long> testList;
 		testList = this.posting_list.get(term);
 		// System.out.println("inside getDocuments");
@@ -101,58 +77,56 @@ public class HashList {
 			// System.out.println("inside test list not null");
 			long doc_frequency = testList.get(1); // get number of documents
 													// with that term
-
-			term_freq_array = new Long[(int) doc_frequency*2];
+			documentsScore = new Long[(int) doc_frequency*2];
 			int doc_id_pos = 2;
-			int term_freq_pos = 3;
-			System.out.println(testList);
-			for (int i = 0; i < term_freq_array.length; i++) {
-				term_freq_array[i] = testList.get(doc_id_pos);
+			int doc_score_pos;
+			for (int i = 0; i < 2*doc_frequency; i++) {
+				doc_score_pos = doc_id_pos + 2;
+				documentsScore[i] = testList.get(doc_id_pos); 
 				i++;
-				term_freq_array[i] = testList.get(term_freq_pos);
+				documentsScore[i] = testList.get(doc_score_pos);
 				doc_id_pos = doc_id_pos + testList.get(doc_id_pos + 1).intValue() + 3;
-				term_freq_pos = term_freq_pos + testList.get(term_freq_pos + 1).intValue() + 3;
 			}
-			//System.out.println("done accumulationg term frequencies of documents!!");
+			// System.out.println("done accumulationg documents");
 			// System.out.println("After done accumulationg documents 1 : length
 			// : "+documents.length + Arrays.asList(documents));
 		}
-		// System.out.println("After done accumulationg documents 2 : "+
-		// Arrays.asList(documents));
-		return term_freq_array;
+//		System.out.println("After done accumulationg documents :"+term);
+		return documentsScore;
 	}
 	
-	Long[] setTermFreq(String term,Long [] a) {
-		Long[] term_freq_array = new Long[0];
-		Long[] only_term_freq_array = new Long[0];
-		ArrayList<Long> testList;
-		testList = this.posting_list.get(term);
-		// System.out.println("inside getDocuments");
-		if (testList != null) {
-//			 System.out.println("inside test list not null");
-//			 get number of documents with that term
-			long doc_frequency = testList.get(1); 
-											
-
-			term_freq_array = new Long[(int) doc_frequency*2];
-			only_term_freq_array = new Long[(int) doc_frequency];
-			int doc_id_pos = 2;
-			int term_freq_pos = 3;
-			System.out.println(testList);
-			for (int i = 0; i < term_freq_array.length; i++) {
-				term_freq_array[i] = testList.get(doc_id_pos);
-				i++;
-				term_freq_array[i] = testList.get(term_freq_pos);
-				doc_id_pos = doc_id_pos + testList.get(doc_id_pos + 1).intValue() + 3;
-				term_freq_pos = term_freq_pos + testList.get(term_freq_pos + 1).intValue() + 3;
+	
+	
+	protected void calculateWdt() {
+		for(String term : this.keySet()){
+			ArrayList<Long> postings = new ArrayList<Long>();
+			postings = this.posting_list.get(term);
+//			System.out.println(term);
+//			System.out.println(postings);
+			if(postings!=null){
+				long doc_frequency = postings.get(1);
+				int doc_id_pos = 2;
+				int term_freq_pos=0;
+				int doc_term_rank_pos=0;
+				Double wdt, wqt, ld;
+				Long score;
+				for (int i = 0; i < doc_frequency; i++) {
+					term_freq_pos = doc_id_pos+1;
+					doc_term_rank_pos = term_freq_pos+1;
+					wdt = 1 + Math.log10(postings.get(term_freq_pos));
+					wqt = Math.log10(total_docs/doc_frequency);
+					ld = docWeightsArray.get(postings.get(doc_id_pos).intValue());
+					score = (new Double((wdt*wqt/ld)*1000000).longValue());	//as we do not store double value convert it to long
+					postings.set(doc_term_rank_pos, score); 	//calculate score and store in tghe postings
+//					System.out.print(wdt+"*"+wqt+"/"+docWeightsArray.get(postings.get(doc_id_pos).intValue())+"****");
+//					System.out.print(score+ " , ");
+					doc_id_pos = doc_id_pos + postings.get(doc_id_pos + 1).intValue() + 3;
+				}
+//				System.out.println();
+				
 			}
-//			System.out.println("done accumulationg term frequencies of documents!!");
-//			 System.out.println("After done accumulationg documents 1 : length
-//			 : "+documents.length + Arrays.asList(documents));
+//			System.out.println(postings);
 		}
-//		 System.out.println("After done accumulationg documents 2 : "+
-//		 Arrays.asList(documents));
-		return term_freq_array;
 	}
 
 	Long[] getPostings(String term) {

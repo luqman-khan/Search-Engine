@@ -40,7 +40,7 @@ public class DiskInvertedIndex {
          // use ByteBuffer to convert the 4 bytes into an int.
          Long documentFrequency = ByteBuffer.wrap(byteDocFreq).getLong();
          
-         List <Long> DocIdList = new ArrayList<Long>();
+         List <Long> DocIdScoreList = new ArrayList<Long>();
          Long seekPosition = postingsPosition;
 //         System.out.print("[ "+documentFrequency+" , ");
 //         for(int i=0; i<15;i++){
@@ -57,7 +57,7 @@ public class DiskInvertedIndex {
         	 postings.seek(seekPosition);
         	 byte[] docId = new byte[8];
              postings.read(docId, 0, docId.length);
-             DocIdList.add(previousDocId+ByteBuffer.wrap(docId).getLong());
+             DocIdScoreList.add(previousDocId+ByteBuffer.wrap(docId).getLong());
              previousDocId += ByteBuffer.wrap(docId).getLong();
              seekPosition += 8; //seek to next term frequency
              postings.seek(seekPosition);
@@ -67,11 +67,15 @@ public class DiskInvertedIndex {
              seekPosition += ByteBuffer.wrap(posFreq).getLong()*8; //seek through the positions to next document id
              
              seekPosition += 8; //seek to rank
+             byte[] score = new byte[8];
+             postings.read(score, 0, score.length);
+             DocIdScoreList.add(ByteBuffer.wrap(score).getLong());
              seekPosition += 8; //seek to next doca id
              
              
          }
-         return DocIdList.toArray(new Long[DocIdList.size()]);
+         System.out.println(DocIdScoreList);
+         return DocIdScoreList.toArray(new Long[DocIdScoreList.size()]);
       }
       catch (IOException ex) {
          System.out.println(ex.toString());
@@ -85,7 +89,7 @@ public class DiskInvertedIndex {
       if (postingsPosition >= 0) {
          return readPostingsFromFile(mPostings, postingsPosition);
       }
-      return null;
+      return new Long[0];
    }
    
    

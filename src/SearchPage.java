@@ -85,7 +85,7 @@ public class SearchPage {
 //				for(int i =0;i<term_list[i].length();i++){
 //				index.inverted_index.calculateWdt(index.inverted_index.pos_hash_list);	
 //			    }
-				index.inverted_index.calculateWdt(index.inverted_index.pos_hash_list);
+				index.inverted_index.pos_hash_list.calculateWdt();
 				System.out.println("Time taken to make inverted index is : "+new SimpleDateFormat("mm,ss,sss").format(System.currentTimeMillis()-time));
 				
 				time = System.currentTimeMillis();

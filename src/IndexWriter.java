@@ -88,38 +88,50 @@ public class IndexWriter {
 			byte[] tSize = ByteBuffer.allocate(4).putInt(dictionary.length).array();
 			vocabTable.write(tSize, 0, tSize.length);
 			int vocabI = 0;
+			ArrayList<Byte> postingArrayList = new ArrayList<>();
+			ArrayList<Byte> vocabTableArrayList = new ArrayList<>();
 			for (String s : dictionary) {
 				// for each String in dictionary, retrieve its postings.
-				Long[] postings = index.pos_hash_list.getDocuments(s);
+				Long[] postings = index.pos_hash_list.getDocumentsScore(s);
 				byte[] vPositionBytes = ByteBuffer.allocate(8).putLong(vocabPositions[vocabI]).array();
-				vocabTable.write(vPositionBytes, 0, vPositionBytes.length);
+				vocabTable.write(vPositionBytes, 0, vPositionBytes.length); 	//write vocab pointer to the table
+//				for(byte b : vPositionBytes)
+//					vocabTableArrayList.add(b);
 
 				byte[] pPositionBytes = ByteBuffer.allocate(8).putLong(postingsFile.getChannel().position()).array();
-				vocabTable.write(pPositionBytes, 0, pPositionBytes.length);
+				vocabTable.write(pPositionBytes, 0, pPositionBytes.length);	//write posting pointer to the table
+//				for(byte b : pPositionBytes)
+//					vocabTableArrayList.add(b);
 
-				byte[] docFreqBytes = ByteBuffer.allocate(8).putLong(postings.length).array();
+				byte[] docFreqBytes = ByteBuffer.allocate(8).putLong(postings.length/2).array();
 				postingsFile.write(docFreqBytes, 0, docFreqBytes.length);
+//				for(byte b : docFreqBytes)
+//					postingArrayList.add(b);
 				
-				vocabTable.flush();
-				postingsFile.flush();
 				
 				Long lastDocId = new Long(0);
 				// int docBytePointer = docFreqBytes.length;
 				// System.out.print(s+" : ");
-				for (Long docId : postings) {
+				Long docId;
+				for (int i=0; i<postings.length;i+=2) {
+					docId = postings[i];
 					// System.out.print(docId - lastDocId+" : ");
 					byte[] docIdBytes = ByteBuffer.allocate(8).putLong(docId - lastDocId).array();
-
 					postingsFile.write(docIdBytes, 0, docIdBytes.length);
+//					for(byte b : docIdBytes)
+//						postingArrayList.add(b);
 					lastDocId = docId;
 
 					Long positions[] = index.pos_hash_list.getPositions(s, new Long(docId));
 
 					byte[] posFreqBytes = ByteBuffer.allocate(8).putLong(positions.length).array();
 					postingsFile.write(posFreqBytes, 0, posFreqBytes.length);
-
-					byte[] docRankBytes = ByteBuffer.allocate(8).putLong(0).array(); 
+//					for(byte b : posFreqBytes)
+//						postingArrayList.add(b);]
+					byte[] docRankBytes = ByteBuffer.allocate(8).putLong(postings[i+1]).array(); 
 					postingsFile.write(docRankBytes, 0, docRankBytes.length); // write rank
+//					for(byte b : docRankBytes)
+//						postingArrayList.add(b);
 
 					// System.out.print("[ ");
 
@@ -128,15 +140,29 @@ public class IndexWriter {
 						// System.out.print(pos-lastPos+" , ");
 						byte[] posBytes = ByteBuffer.allocate(8).putLong(pos - lastPos).array();
 						postingsFile.write(posBytes, 0, posBytes.length);
+						
+//						for(byte b : posBytes)
+//							postingArrayList.add(b);
 						lastPos = pos;
 					}
 					// System.out.println(" ]");
 				}
+				System.out.println("calculation done : "+s);
 				vocabI++;
-				vocabTable.flush();
-				postingsFile.flush();
 			}
 			
+//			byte [] vocabTableByteBuffer = new byte[vocabTableArrayList.size()];
+//			for(int i=0;i<vocabTableArrayList.size();i++)
+//				vocabTableByteBuffer[i]=vocabTableArrayList.get(i);
+//			
+//			byte [] postingByteBuffer = new byte[postingArrayList.size()];
+//			for(int i=0;i<postingArrayList.size();i++)
+//				postingByteBuffer[i]=postingArrayList.get(i);
+//			
+//			vocabTable.write(vocabTableByteBuffer, 0, vocabTableByteBuffer.length);
+//			postingsFile.write(postingByteBuffer, 0, postingByteBuffer.length);
+//			vocabTable.flush();
+//			postingsFile.flush();
 			vocabTable.close();
 			postingsFile.close();
 		} catch (FileNotFoundException ex) {
