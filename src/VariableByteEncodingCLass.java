@@ -46,11 +46,11 @@ public class VariableByteEncodingCLass {
 		List<Integer> intArrayList = new ArrayList<Integer>();
 		int n = 0;
 		for (Byte abyte : byteStreamArray) {
-			int someInt = getIntValue(abyte.byteValue(), n);
-			if (someInt < 128) {
-				n = (n * 128) + someInt;
+			int an_int = getIntValue(abyte.byteValue(), n);
+			if (an_int < 128) {
+				n = (n * 128) + an_int;
 			} else {
-				n = (n * 128) + (someInt - 128);
+				n = (n * 128) + (an_int - 128);
 				intArrayList.add(n);
 				n = 0;
 			}
@@ -62,14 +62,7 @@ public class VariableByteEncodingCLass {
 	 * Byte to Integer conversion.
 	 */
 	private int getIntValue(Byte a_byte, int n) {
-		int new_int = 0;
-		new_int = a_byte & MASK;
-		String someString = Integer.toBinaryString(a_byte);
-		int[] numarray = new int[someString.length()];
-		for (int i = 0; i < someString.length(); i++) {
-			numarray[i] = someString.charAt(i);
-		}
-		return new_int;
+		return a_byte & MASK;
 	}
 	
 	/**
