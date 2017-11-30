@@ -9,8 +9,9 @@ public class DocScore implements Comparable<DocScore> {
 	
 	@Override
     public int compareTo(DocScore cmp) {
-		if(cmp!=null)
+		if(cmp!=null){
 			return this.score.compareTo(cmp.score);
+		}
 		else
 			return this.score.compareTo(new Long(0));
 	}

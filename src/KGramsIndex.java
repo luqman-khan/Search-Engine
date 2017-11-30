@@ -29,7 +29,7 @@ public class KGramsIndex {
 
     public static void main(String[] args){
         String a = "metric";
-        String b = "oh bro big time";
+//        String b = "oh bro big time";
         ArrayList<String> ls = gen_ngrams(1, a);
         printKgram(ls);
         ls = gen_ngrams(2, a);

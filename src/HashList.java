@@ -1,15 +1,13 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
 public class HashList {
 
 	HashMap<String, ArrayList<Long>> posting_list;
-	private int doc_id_pos, term_freq_pos;
-	protected ArrayList<Double> docWeightsArray = new ArrayList<>();
+	protected ArrayList<DocumentInfo> docInfoArray = new ArrayList<>();
 	protected Long total_docs = new Long(0);
-
+	protected Long total_term_count = new Long(0);
 	HashList() {
 		posting_list = new HashMap<>();
 	}
@@ -29,7 +27,7 @@ public class HashList {
 			testList.add(new Long(1)); // term rank wdt
 		}
 
-		if (testList.get(testList.get(0).intValue()) != doc_id) {
+		if (!testList.get(testList.get(0).intValue()).equals(doc_id)) {
 			testList.set(1, testList.get(1) + 1); // update doc freq
 			testList.add(doc_id); // add new doc id
 			testList.set(0, new Long(testList.size() - 1));// update the
@@ -48,22 +46,20 @@ public class HashList {
 		Long[] documents = new Long[0];
 		ArrayList<Long> testList;
 		testList = this.posting_list.get(term);
-		// System.out.println("inside getDocuments");
 		if (testList != null) {
-			// System.out.println("inside test list not null");
 			long doc_frequency = testList.get(1); // get number of documents
 													// with that term
+			if(term.equals("a"))
+				System.out.println("Document frequency is : "+doc_frequency);
 			documents = new Long[(int) doc_frequency];
 			int doc_id_pos = 2;
 			for (int i = 0; i < doc_frequency; i++) {
 				documents[i] = testList.get(doc_id_pos);
 				doc_id_pos = doc_id_pos + testList.get(doc_id_pos + 1).intValue() + 3;
 			}
-			// System.out.println("done accumulationg documents");
-			// System.out.println("After done accumulationg documents 1 : length
-			// : "+documents.length + Arrays.asList(documents));
 		}
-//		System.out.println("After done accumulationg documents :"+term);
+		if(term.equals("a"))
+			System.out.println("Document length is : "+documents.length);
 		return documents;
 	}
 	
@@ -72,9 +68,7 @@ public class HashList {
 		Long[] documentsScore = new Long[0];
 		ArrayList<Long> testList;
 		testList = this.posting_list.get(term);
-		// System.out.println("inside getDocuments");
 		if (testList != null) {
-			// System.out.println("inside test list not null");
 			long doc_frequency = testList.get(1); // get number of documents
 													// with that term
 			documentsScore = new Long[(int) doc_frequency*2];
@@ -87,11 +81,7 @@ public class HashList {
 				documentsScore[i] = testList.get(doc_score_pos);
 				doc_id_pos = doc_id_pos + testList.get(doc_id_pos + 1).intValue() + 3;
 			}
-			// System.out.println("done accumulationg documents");
-			// System.out.println("After done accumulationg documents 1 : length
-			// : "+documents.length + Arrays.asList(documents));
 		}
-//		System.out.println("After done accumulationg documents :"+term);
 		return documentsScore;
 	}
 	
@@ -101,8 +91,6 @@ public class HashList {
 		for(String term : this.keySet()){
 			ArrayList<Long> postings = new ArrayList<Long>();
 			postings = this.posting_list.get(term);
-//			System.out.println(term);
-//			System.out.println(postings);
 			if(postings!=null){
 				long doc_frequency = postings.get(1);
 				int doc_id_pos = 2;
@@ -115,17 +103,12 @@ public class HashList {
 					doc_term_rank_pos = term_freq_pos+1;
 					wdt = 1 + Math.log10(postings.get(term_freq_pos));
 					wqt = Math.log10(total_docs/doc_frequency);
-					ld = docWeightsArray.get(postings.get(doc_id_pos).intValue());
+					ld = docInfoArray.get(postings.get(doc_id_pos).intValue()).ld;
 					score = (new Double((wdt*wqt/ld)*1000000).longValue());	//as we do not store double value convert it to long
 					postings.set(doc_term_rank_pos, score); 	//calculate score and store in tghe postings
-//					System.out.print(wdt+"*"+wqt+"/"+docWeightsArray.get(postings.get(doc_id_pos).intValue())+"****");
-//					System.out.print(score+ " , ");
 					doc_id_pos = doc_id_pos + postings.get(doc_id_pos + 1).intValue() + 3;
 				}
-//				System.out.println();
-				
 			}
-//			System.out.println(postings);
 		}
 	}
 
