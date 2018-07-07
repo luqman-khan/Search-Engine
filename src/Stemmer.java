@@ -1,7 +1,7 @@
 import org.tartarus.snowball.SnowballStemmer;
-/**
- * This class is used for stemming file and query terms using Porter2 stemmer.
- */
+
+ // This class is used for stemming file and query terms using Porter2 stemmer.
+ 
 class Stemmer {
 	public String processWord(String word) {
 		try {
